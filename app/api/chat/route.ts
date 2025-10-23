@@ -72,6 +72,16 @@ ANSWER:`;
     });
   } catch (error) {
     console.error("Error in chat:", error);
+    
+    // Log detailed error for debugging
+    if (error instanceof Error) {
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
+    
     return NextResponse.json(
       {
         error:
