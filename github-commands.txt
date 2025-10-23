@@ -1,0 +1,13 @@
+# Copy these commands after creating your GitHub repository
+
+# Step 1: Add your GitHub repository as remote
+# Replace YOUR_USERNAME with your actual GitHub username
+git remote add origin https://github.com/YOUR_USERNAME/documind.git
+
+# Step 2: Rename branch to main
+git branch -M main
+
+# Step 3: Push to GitHub
+git push -u origin main
+
+# That's it! Your project is now on GitHub!
