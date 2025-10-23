@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DocuMind - AI Research Assistant",
+  title: "DocMind - AI Research Assistant",
   description: "Free, intelligent research assistant for your documents",
 };
 
