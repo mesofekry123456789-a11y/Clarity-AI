@@ -6,6 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const { documentId, question } = await request.json();
 
+    console.log("Chat request received:", { documentId, question: question.substring(0, 50) });
+
     if (!documentId || !question) {
       return NextResponse.json(
         { error: "Missing documentId or question" },
@@ -14,16 +16,22 @@ export async function POST(request: NextRequest) {
     }
 
     if (!process.env.GOOGLE_API_KEY) {
+      console.error("GOOGLE_API_KEY is not set!");
       return NextResponse.json(
         { error: "API key not configured" },
         { status: 500 }
       );
     }
 
+    console.log("API Key exists, length:", process.env.GOOGLE_API_KEY.length);
+
     // Search for relevant document chunks
+    console.log("Searching for relevant documents...");
     const relevantDocs = await searchSimilarDocuments(documentId, question, 4);
+    console.log("Found documents:", relevantDocs.length);
 
     if (relevantDocs.length === 0) {
+      console.log("No relevant documents found");
       return NextResponse.json({
         answer: "I couldn't find relevant information in the document to answer your question.",
         sources: [],
@@ -34,6 +42,8 @@ export async function POST(request: NextRequest) {
     const context = relevantDocs
       .map((doc, idx) => `[${idx + 1}] ${doc.pageContent}`)
       .join("\n\n");
+    
+    console.log("Context prepared, length:", context.length);
 
     // Create prompt for the LLM
     const prompt = `You are a helpful AI assistant that answers questions based solely on the provided document context. 
@@ -53,6 +63,7 @@ QUESTION: ${question}
 ANSWER:`;
 
     // Call Google Gemini API with timeout
+    console.log("Calling Gemini API...");
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
     const model = genAI.getGenerativeModel({ 
       model: "gemini-1.5-flash",
@@ -62,9 +73,12 @@ ANSWER:`;
       }
     });
 
+    console.log("Generating content...");
     const result = await model.generateContent(prompt);
+    console.log("Got result from API");
     const response = await result.response;
     const answer = response.text();
+    console.log("Answer generated, length:", answer.length);
 
     // Prepare sources for citation
     const sources = relevantDocs.map((doc) => ({
