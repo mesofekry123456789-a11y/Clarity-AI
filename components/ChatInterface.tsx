@@ -53,6 +53,10 @@ export default function ChatInterface({
     setIsLoading(true);
 
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -62,13 +66,22 @@ export default function ChatInterface({
           documentId,
           question: input,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error("Failed to get response");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get response");
       }
 
       const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
       const assistantMessage: Message = {
         role: "assistant",
         content: data.answer,
@@ -76,9 +89,20 @@ export default function ChatInterface({
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
+      console.error("Chat error:", error);
+      let errorMsg = "Sorry, I encountered an error processing your question. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMsg = "Request timed out. Please try again with a shorter question.";
+        } else if (error.message) {
+          errorMsg = `Error: ${error.message}`;
+        }
+      }
+      
       const errorMessage: Message = {
         role: "assistant",
-        content: "Sorry, I encountered an error processing your question. Please try again.",
+        content: errorMsg,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {

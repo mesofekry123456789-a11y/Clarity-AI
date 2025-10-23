@@ -52,9 +52,15 @@ QUESTION: ${question}
 
 ANSWER:`;
 
-    // Call Google Gemini API
+    // Call Google Gemini API with timeout
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        maxOutputTokens: 1024,
+        temperature: 0.7,
+      }
+    });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
